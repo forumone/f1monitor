@@ -1,0 +1,111 @@
+<?php
+
+/**
+ * Implements hook_permission().
+ */
+function f1monitor_permission() {
+  return array(
+    'view f1monitor report' => array(
+      'title' => 'View F1 Monitor Report',
+      'description' => 'View the <a href="/admin/reports/f1monitor">F1 Monitor</a> report with details of best practices.',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function f1monitor_menu() {
+  $items = array();
+
+  $items['admin/reports/f1monitor'] = array(
+    'title' => t('F1 Monitoring'),
+    'description' => t('Status report of Drupal best practices'),
+    'page callback' => 'f1monitor_report',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('view f1monitor report'),
+    'access callaback' => array('user_access'),
+    'file' => 'f1monitor.admin.inc',
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_ctools_plugin_type().
+ */
+function f1monitor_ctools_plugin_type(){
+  $plugins['monitors'] = array(
+    'load themes' => TRUE,
+    'use hooks' => TRUE, //defaults to true, but will change in future versions of ctools.
+  );
+  return $plugins;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function f1monitor_ctools_plugin_directory($module, $plugin_type) {
+  if ($module == 'f1monitor') {
+    return "plugins/$plugin_type";
+  }
+}
+
+/**
+ * Fetch metadata on a specific monitor plugin.
+ */
+function f1monitor_get_monitor($plugin){
+  ctools_include('context');
+  ctools_include('plugins');
+  return ctools_get_plugins('f1montor', 'monitors', $plugin);
+}
+
+
+/**
+ * Fetch metadata for all monitor plugins.
+ *
+ * @return
+ *   An array of arrays with information about all available monitor plugins.
+ */
+function f1monitor_get_content_types() {
+  ctools_include('context');
+  ctools_include('plugins');
+  return ctools_get_plugins('f1monitor', 'monitors');
+}
+
+
+/**
+ *
+ */
+function f1monitor_gather_plugin_data($plugins) {
+  $report = array();
+  foreach($plugins as $id => $plugin) {
+    if(isset($plugin['callback']) && function_exists($plugin['callback'])){
+      $callback = $plugin['callback'];
+      $data = $callback();
+      $report = array_merge($data, $report);
+    }
+  }
+  return $report;
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function f1monitor_requirements($phase) {
+  // Checking status of existing install
+  $items = array();
+  if($phase == 'runtime') {
+    $plugins = f1monitor_get_content_types();
+    $data = f1monitor_gather_plugin_data($plugins);
+    foreach($data as $id => $plugin) {
+      if(isset($plugin['show status']) && $plugin['show status'] == TRUE) {
+        $items[$id] = $plugin;
+      }
+
+    }
+  }
+  return $items;
+}
+

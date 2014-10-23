@@ -1,0 +1,5 @@
+name = F1 Monitor
+description = Evaluates a site for production readiness
+package = Forum One
+core = 7.x
+
