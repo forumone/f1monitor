@@ -3,3 +3,5 @@ description = Evaluates a site for production readiness
 package = Forum One
 core = 7.x
 
+dependencies[] = ctools
+
